@@ -95,6 +95,8 @@ const upcomingList = document.getElementById("upcoming-list");
 const markCollectedBtn = document.getElementById("mark-collected-btn");
 const lastCollectedLabel = document.getElementById("last-collected-label");
 const undoBtn = document.getElementById("undo-btn");
+const toggleDaily = document.getElementById("toggle-daily");
+const toggleStrong = document.getElementById("toggle-strong");
 
 let lastCollectedIndex = parseInt(
   localStorage.getItem("lastCollectedIndex") ?? "-1",
@@ -103,6 +105,7 @@ let lastCollectedIndex = parseInt(
 let undoPrevIndex = null;
 let undoTimeoutId = null;
 let swRegistration = null;
+let notificationTimers = [];
 
 function formatDate(date) {
   return date.toLocaleDateString("en-GB", {
@@ -231,6 +234,97 @@ function showUndo(prevIndex) {
   }, 10000);
 }
 
+function clearNotificationTimers() {
+  notificationTimers.forEach((id) => clearTimeout(id));
+  notificationTimers = [];
+}
+
+function scheduleNotifications(next) {
+  clearNotificationTimers();
+  if (!next || !("Notification" in window)) return;
+
+  const dailyEnabled =
+    localStorage.getItem("dailyCountdownEnabled") !== "false";
+  const strongEnabled =
+    localStorage.getItem("strongRemindersEnabled") !== "false";
+
+  Notification.requestPermission().then((permission) => {
+    if (permission !== "granted") return;
+
+    const dateObj = new Date(next.date);
+    const now = new Date();
+    const body = next.bins.join(", ");
+
+    // Daily countdown from 7 days before at 23:00
+    if (dailyEnabled) {
+      for (let daysBefore = 7; daysBefore >= 1; daysBefore--) {
+        const when = new Date(dateObj);
+        when.setDate(when.getDate() - daysBefore);
+        when.setHours(23, 0, 0, 0);
+
+        const delay = when.getTime() - now.getTime();
+        if (delay > 0) {
+          const title =
+            daysBefore === 1
+              ? "Bins tomorrow"
+              : `Bins in ${daysBefore} days`;
+          const id = setTimeout(() => {
+            if (swRegistration) {
+              swRegistration.showNotification(title, {
+                body,
+                icon: "assets/icons/icon-192.png",
+                badge: "assets/icons/icon-192.png"
+              });
+            } else {
+              new Notification(title, { body });
+            }
+          }, delay);
+          notificationTimers.push(id);
+        }
+      }
+    }
+
+    if (strongEnabled) {
+      // Day before 19:00
+      const dayBefore = new Date(dateObj);
+      dayBefore.setDate(dayBefore.getDate() - 1);
+      dayBefore.setHours(19, 0, 0, 0);
+
+      // Day of 07:00
+      const morning1 = new Date(dateObj);
+      morning1.setHours(7, 0, 0, 0);
+
+      // Day of 10:00
+      const morning2 = new Date(dateObj);
+      morning2.setHours(10, 0, 0, 0);
+
+      const times = [
+        { when: dayBefore, title: "Bins tomorrow" },
+        { when: morning1, title: "Bins today" },
+        { when: morning2, title: "Final reminder" }
+      ];
+
+      times.forEach(({ when, title }) => {
+        const delay = when.getTime() - now.getTime();
+        if (delay > 0) {
+          const id = setTimeout(() => {
+            if (swRegistration) {
+              swRegistration.showNotification(title, {
+                body,
+                icon: "assets/icons/icon-192.png",
+                badge: "assets/icons/icon-192.png"
+              });
+            } else {
+              new Notification(title, { body });
+            }
+          }, delay);
+          notificationTimers.push(id);
+        }
+      });
+    }
+  });
+}
+
 function markCollected(next) {
   if (!next) return;
 
@@ -265,45 +359,14 @@ function undoMarkCollected() {
   scheduleNotifications(next);
 }
 
-function scheduleNotifications(next) {
-  if (!next || !("Notification" in window) || !swRegistration) return;
+function loadNotificationSettings() {
+  const daily =
+    localStorage.getItem("dailyCountdownEnabled") !== "false"; // default true
+  const strong =
+    localStorage.getItem("strongRemindersEnabled") !== "false"; // default true
 
-  Notification.requestPermission().then((permission) => {
-    if (permission !== "granted") return;
-
-    const dateObj = new Date(next.date);
-
-    const dayBefore = new Date(dateObj);
-    dayBefore.setDate(dayBefore.getDate() - 1);
-    dayBefore.setHours(19, 0, 0, 0);
-
-    const morning1 = new Date(dateObj);
-    morning1.setHours(7, 0, 0, 0);
-
-    const morning2 = new Date(dateObj);
-    morning2.setHours(10, 0, 0, 0);
-
-    const times = [
-      { when: dayBefore, label: "Bins tomorrow" },
-      { when: morning1, label: "Bins today" },
-      { when: morning2, label: "Bins today" }
-    ];
-
-    const body = next.bins.join(", ");
-
-    times.forEach(({ when, label }) => {
-      const delay = when.getTime() - Date.now();
-      if (delay > 0) {
-        setTimeout(() => {
-          swRegistration.showNotification(label, {
-            body,
-            icon: "assets/icons/icon-192.png",
-            badge: "assets/icons/icon-192.png"
-          });
-        }, delay);
-      }
-    });
-  });
+  toggleDaily.checked = daily;
+  toggleStrong.checked = strong;
 }
 
 function init() {
@@ -312,9 +375,28 @@ function init() {
   updateNextCard(next);
   updateUpcomingList(upcoming);
   loadLastCollected();
+  loadNotificationSettings();
 
   markCollectedBtn.addEventListener("click", () => markCollected(next));
   undoBtn.addEventListener("click", undoMarkCollected);
+
+  toggleDaily.addEventListener("change", () => {
+    localStorage.setItem(
+      "dailyCountdownEnabled",
+      toggleDaily.checked ? "true" : "false"
+    );
+    const { next } = getNextAndUpcoming();
+    scheduleNotifications(next);
+  });
+
+  toggleStrong.addEventListener("change", () => {
+    localStorage.setItem(
+      "strongRemindersEnabled",
+      toggleStrong.checked ? "true" : "false"
+    );
+    const { next } = getNextAndUpcoming();
+    scheduleNotifications(next);
+  });
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker
@@ -323,7 +405,11 @@ function init() {
         swRegistration = reg;
         scheduleNotifications(next);
       })
-      .catch(() => {});
+      .catch(() => {
+        scheduleNotifications(next);
+      });
+  } else {
+    scheduleNotifications(next);
   }
 }
 
