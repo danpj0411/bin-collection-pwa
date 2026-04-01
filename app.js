@@ -1,5 +1,4 @@
 // Exact Winchester schedule for 19 Rotherley Gardens, SO22 6TN
-// Derived from the council PDF calendar.
 
 const SCHEDULE = [
   // 2026-03
@@ -98,7 +97,7 @@ const lastCollectedLabel = document.getElementById("last-collected-label");
 
 function formatDate(date) {
   return date.toLocaleDateString("en-GB", {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
     month: "short"
   });
@@ -146,18 +145,23 @@ function updateNextCard(next) {
     nextTypeEl.textContent = "No upcoming collections";
     nextDateEl.textContent = "";
     nextBinText.textContent = "";
-    nextBinIcon.className = "bin-icon";
+    nextBinIcon.innerHTML = "";
     markCollectedBtn.disabled = true;
     return;
   }
 
-  const mainType = next.bins[0];
-  nextTypeEl.textContent = mainType;
+  nextTypeEl.textContent = next.bins.join(", ");
   nextDateEl.textContent = formatDate(new Date(next.date));
-  nextBinText.textContent = next.bins.join(", ");
 
-  const colourVar = BIN_COLOURS[mainType] || "general";
-  nextBinIcon.className = `bin-icon bin-${colourVar}`;
+  // Multiple coloured icons for all bins that day
+  nextBinIcon.innerHTML = next.bins
+    .map((type) => {
+      const colourVar = BIN_COLOURS[type] || "general";
+      return `<div class="bin-icon bin-${colourVar}"></div>`;
+    })
+    .join("");
+
+  nextBinText.textContent = next.bins.join(", ");
   markCollectedBtn.disabled = false;
 }
 
@@ -170,11 +174,16 @@ function updateUpcomingList(upcoming) {
 
   upcomingList.innerHTML = upcoming
     .map((item) => {
-      const mainType = item.bins[0];
-      const colourVar = BIN_COLOURS[mainType] || "general";
+      const icons = item.bins
+        .map((type) => {
+          const colourVar = BIN_COLOURS[type] || "general";
+          return `<div class="bin-icon bin-${colourVar}"></div>`;
+        })
+        .join("");
+
       return `
         <div class="upcoming-row">
-          <div class="bin-icon bin-${colourVar}"></div>
+          <div class="upcoming-icons">${icons}</div>
           <div>
             <div class="upcoming-text-main">${formatDate(item.dateObj)}</div>
             <div class="upcoming-text-sub">${item.bins.join(", ")}</div>

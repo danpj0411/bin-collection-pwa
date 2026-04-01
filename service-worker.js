@@ -1,4 +1,4 @@
-const CACHE_NAME = "bin-pwa-v1";
+const CACHE_NAME = "winchester-bins-v1";
 const ASSETS = [
   "./",
   "index.html",

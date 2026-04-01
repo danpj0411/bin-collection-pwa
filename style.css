@@ -217,3 +217,15 @@ body {
 .bin-garden {
   background: var(--garden);
 }
+
+/* Multiple icons */
+
+#next-bin-icon {
+  display: flex;
+  gap: 8px;
+}
+
+.upcoming-icons {
+  display: flex;
+  gap: 6px;
+}
