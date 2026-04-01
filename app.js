@@ -1,10 +1,81 @@
-// Simple schedule model: edit this to match your real collections
+// Exact Winchester schedule for 19 Rotherley Gardens, SO22 6TN
+// Derived from the council PDF calendar.
+
 const SCHEDULE = [
-  { date: "2026-04-02", bins: ["Food Waste", "Recycling"] },
-  { date: "2026-04-09", bins: ["Food Waste", "General Waste", "Garden Waste"] },
-  { date: "2026-04-16", bins: ["Food Waste", "Recycling"] },
-  { date: "2026-04-23", bins: ["Food Waste", "General Waste", "Garden Waste"] },
-  { date: "2026-04-30", bins: ["Food Waste", "Recycling"] }
+  // 2026-03
+  { date: "2026-03-18", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-03-25", bins: ["Food Waste", "Recycling"] },
+
+  // 2026-04
+  { date: "2026-04-01", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-04-08", bins: ["Glass"] },
+  { date: "2026-04-09", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-04-15", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-04-22", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-04-29", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+
+  // 2026-05
+  { date: "2026-05-07", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2026-05-13", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-05-20", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-05-28", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+
+  // 2026-06
+  { date: "2026-06-03", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2026-06-10", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-06-17", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-06-24", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+
+  // 2026-07
+  { date: "2026-07-01", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2026-07-08", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-07-15", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-07-22", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-07-29", bins: ["Food Waste", "Glass", "Recycling"] },
+
+  // 2026-08
+  { date: "2026-08-05", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-08-12", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-08-19", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-08-26", bins: ["Food Waste", "Glass", "Recycling"] },
+
+  // 2026-09
+  { date: "2026-09-03", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-09-09", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-09-16", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-09-23", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2026-09-30", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+
+  // 2026-10
+  { date: "2026-10-07", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-10-14", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-10-21", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2026-10-28", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+
+  // 2026-11
+  { date: "2026-11-04", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-11-11", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-11-18", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2026-11-25", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+
+  // 2026-12
+  { date: "2026-12-02", bins: ["Food Waste", "Recycling"] },
+  { date: "2026-12-09", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-12-16", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2026-12-23", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2026-12-30", bins: ["Food Waste", "Recycling"] },
+
+  // 2027-01
+  { date: "2027-01-06", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2027-01-13", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2027-01-20", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2027-01-27", bins: ["Food Waste", "Recycling"] },
+
+  // 2027-02
+  { date: "2027-02-03", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2027-02-10", bins: ["Food Waste", "Glass", "Recycling"] },
+  { date: "2027-02-17", bins: ["Food Waste", "Garden Waste", "General Waste"] },
+  { date: "2027-02-24", bins: ["Food Waste", "Recycling"] }
 ];
 
 const BIN_COLOURS = {
@@ -34,7 +105,9 @@ function formatDate(date) {
 }
 
 function daysBetween(a, b) {
-  const ms = b.setHours(0, 0, 0, 0) - a.setHours(0, 0, 0, 0);
+  const aMid = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+  const bMid = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+  const ms = bMid - aMid;
   return Math.round(ms / 86400000);
 }
 
@@ -73,7 +146,7 @@ function updateNextCard(next) {
     nextTypeEl.textContent = "No upcoming collections";
     nextDateEl.textContent = "";
     nextBinText.textContent = "";
-    nextBinIcon.style.background = "#333";
+    nextBinIcon.className = "bin-icon";
     markCollectedBtn.disabled = true;
     return;
   }
@@ -85,6 +158,7 @@ function updateNextCard(next) {
 
   const colourVar = BIN_COLOURS[mainType] || "general";
   nextBinIcon.className = `bin-icon bin-${colourVar}`;
+  markCollectedBtn.disabled = false;
 }
 
 function updateUpcomingList(upcoming) {
