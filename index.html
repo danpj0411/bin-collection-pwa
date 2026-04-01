@@ -1,62 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <title>Bin Collection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- PWA Requirements -->
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#4CAF50" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
 
-    <!-- iOS PWA Support -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
-
-    <title>Bin Collection</title>
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="assets/css/colours.css" />
+  <link rel="icon" href="assets/icons/icon-192.png" sizes="192x192" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <meta name="theme-color" content="#000000" />
 </head>
-
 <body>
-
-    <header>
-        <h1>Next Bin Collection</h1>
-        <p id="address">19 Rotherley Gardens, Winchester</p>
+  <main class="app">
+    <header class="app-header">
+      <h1 class="app-title">PETERBOROUGH BINS</h1>
+      <p class="app-date" id="today-label"></p>
+      <p class="app-countdown" id="countdown-label"></p>
+      <div class="notif-pill">
+        <span class="notif-dot"></span>
+        <span>Notifications On</span>
+      </div>
     </header>
 
-    <main>
+    <section class="card" id="next-card">
+      <p class="card-label">Next collection</p>
+      <h2 class="next-type" id="next-type">–</h2>
+      <p class="next-date" id="next-date">–</p>
 
-        <!-- Countdown -->
-        <section id="countdown-section">
-            <h2>Countdown</h2>
-            <div id="countdown" class="countdown-box">Loading…</div>
-        </section>
+      <div class="next-bin-row">
+        <div class="bin-icon" id="next-bin-icon"></div>
+        <p class="next-bin-text" id="next-bin-text"></p>
+      </div>
 
-        <!-- Next Collection Info -->
-        <section id="next-collection-section">
-            <h2>Upcoming Collection</h2>
-            <div id="collection-info" class="collection-box">
-                Loading…
-            </div>
-        </section>
+      <button class="btn-primary" id="mark-collected-btn">
+        Mark as Collected
+      </button>
+      <p class="last-collected" id="last-collected-label"></p>
+    </section>
 
-        <!-- Mark as Collected -->
-        <section id="actions-section">
-            <button id="mark-collected-btn" class="action-btn">Mark as Collected</button>
-            <button id="undo-btn" class="undo-btn hidden">Undo</button>
-        </section>
+    <section class="card">
+      <h2 class="section-title">Upcoming collections</h2>
+      <div id="upcoming-list"></div>
+    </section>
 
-    </main>
+    <section class="card">
+      <h2 class="section-title">Bin colour key</h2>
+      <div class="bin-row">
+        <div class="bin-icon bin-food"></div>
+        <span>Food Waste</span>
+      </div>
+      <div class="bin-row">
+        <div class="bin-icon bin-recycling"></div>
+        <span>Recycling</span>
+      </div>
+      <div class="bin-row">
+        <div class="bin-icon bin-glass"></div>
+        <span>Glass</span>
+      </div>
+      <div class="bin-row">
+        <div class="bin-icon bin-general"></div>
+        <span>General Waste</span>
+      </div>
+      <div class="bin-row">
+        <div class="bin-icon bin-garden"></div>
+        <span>Garden Waste</span>
+      </div>
+    </section>
+  </main>
 
-    <footer>
-        <p>Bin Collection PWA</p>
-    </footer>
-
-    <!-- Main App Script -->
-    <script type="module" src="app.js"></script>
-
+  <script src="app.js"></script>
 </body>
 </html>
