@@ -94,6 +94,15 @@ const nextBinText = document.getElementById("next-bin-text");
 const upcomingList = document.getElementById("upcoming-list");
 const markCollectedBtn = document.getElementById("mark-collected-btn");
 const lastCollectedLabel = document.getElementById("last-collected-label");
+const undoBtn = document.getElementById("undo-btn");
+
+let lastCollectedIndex = parseInt(
+  localStorage.getItem("lastCollectedIndex") ?? "-1",
+  10
+);
+let undoPrevIndex = null;
+let undoTimeoutId = null;
+let swRegistration = null;
 
 function formatDate(date) {
   return date.toLocaleDateString("en-GB", {
@@ -112,11 +121,14 @@ function daysBetween(a, b) {
 
 function getNextAndUpcoming() {
   const today = new Date();
-  const upcoming = SCHEDULE
-    .map((item) => ({
-      ...item,
-      dateObj: new Date(item.date)
-    }))
+  const indexed = SCHEDULE.map((item, index) => ({
+    ...item,
+    index,
+    dateObj: new Date(item.date)
+  }));
+
+  const upcoming = indexed
+    .filter((item) => item.index > lastCollectedIndex)
     .filter((item) => item.dateObj >= today)
     .sort((a, b) => a.dateObj - b.dateObj);
 
@@ -153,7 +165,6 @@ function updateNextCard(next) {
   nextTypeEl.textContent = next.bins.join(", ");
   nextDateEl.textContent = formatDate(new Date(next.date));
 
-  // Multiple coloured icons for all bins that day
   nextBinIcon.innerHTML = next.bins
     .map((type) => {
       const colourVar = BIN_COLOURS[type] || "general";
@@ -172,7 +183,9 @@ function updateUpcomingList(upcoming) {
     return;
   }
 
-  upcomingList.innerHTML = upcoming
+  const limited = upcoming.slice(0, 5);
+
+  upcomingList.innerHTML = limited
     .map((item) => {
       const icons = item.bins
         .map((type) => {
@@ -204,11 +217,93 @@ function loadLastCollected() {
   lastCollectedLabel.textContent = `Last marked as collected: ${formatDate(d)}`;
 }
 
+function showUndo(prevIndex) {
+  undoPrevIndex = prevIndex;
+  undoBtn.hidden = false;
+
+  if (undoTimeoutId) {
+    clearTimeout(undoTimeoutId);
+  }
+
+  undoTimeoutId = setTimeout(() => {
+    undoBtn.hidden = true;
+    undoPrevIndex = null;
+  }, 10000);
+}
+
 function markCollected(next) {
   if (!next) return;
+
   const now = new Date();
   localStorage.setItem("lastCollectedDate", now.toISOString());
+
+  const prevIndex = lastCollectedIndex;
+  lastCollectedIndex = next.index;
+  localStorage.setItem("lastCollectedIndex", String(lastCollectedIndex));
+
   loadLastCollected();
+  const { next: newNext, upcoming } = getNextAndUpcoming();
+  updateHeader(newNext);
+  updateNextCard(newNext);
+  updateUpcomingList(upcoming);
+  scheduleNotifications(newNext);
+  showUndo(prevIndex);
+}
+
+function undoMarkCollected() {
+  if (undoPrevIndex === null) return;
+
+  lastCollectedIndex = undoPrevIndex;
+  localStorage.setItem("lastCollectedIndex", String(lastCollectedIndex));
+  undoPrevIndex = null;
+  undoBtn.hidden = true;
+
+  const { next, upcoming } = getNextAndUpcoming();
+  updateHeader(next);
+  updateNextCard(next);
+  updateUpcomingList(upcoming);
+  scheduleNotifications(next);
+}
+
+function scheduleNotifications(next) {
+  if (!next || !("Notification" in window) || !swRegistration) return;
+
+  Notification.requestPermission().then((permission) => {
+    if (permission !== "granted") return;
+
+    const dateObj = new Date(next.date);
+
+    const dayBefore = new Date(dateObj);
+    dayBefore.setDate(dayBefore.getDate() - 1);
+    dayBefore.setHours(19, 0, 0, 0);
+
+    const morning1 = new Date(dateObj);
+    morning1.setHours(7, 0, 0, 0);
+
+    const morning2 = new Date(dateObj);
+    morning2.setHours(10, 0, 0, 0);
+
+    const times = [
+      { when: dayBefore, label: "Bins tomorrow" },
+      { when: morning1, label: "Bins today" },
+      { when: morning2, label: "Bins today" }
+    ];
+
+    const body = next.bins.join(", ");
+
+    times.forEach(({ when, label }) => {
+      const delay = when.getTime() - Date.now();
+      if (delay > 0) {
+        setTimeout(() => {
+          swRegistration.showNotification(label, {
+            body,
+            icon: "assets/icons/icon-192.png",
+            badge: "assets/icons/icon-192.png"
+          });
+        }, delay);
+      }
+    });
+  });
 }
 
 function init() {
@@ -219,9 +314,16 @@ function init() {
   loadLastCollected();
 
   markCollectedBtn.addEventListener("click", () => markCollected(next));
+  undoBtn.addEventListener("click", undoMarkCollected);
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    navigator.serviceWorker
+      .register("service-worker.js")
+      .then((reg) => {
+        swRegistration = reg;
+        scheduleNotifications(next);
+      })
+      .catch(() => {});
   }
 }
 
